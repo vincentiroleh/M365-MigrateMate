@@ -1,4 +1,4 @@
-import { axios, authenticate } from "./config.js";
+import { axios, fs, csv, authenticate } from "./config.js";
 
 async function createUser(userData) {
     const token = await authenticate();
@@ -18,21 +18,29 @@ async function createUser(userData) {
         const response = await axios.post('https://graph.microsoft.com/v1.0/users', user, {
             headers: {
                 Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
             },
         });
         console.log('User created successfully', response.data);
     } catch (error) {
         console.log('Error creating user', error.response ? error.response.data : error.message);
-        
+
     }
 }
 
-// Example: Create a user with dummy data
-const userData = {
-    displayName: 'John Doe',
-    mailNickname: 'johndoe',
-    userPrincipalName: 'johndoe@ym4df.onmicrosoft.com',
-    password: '@Password123',
-};
+// Read users from a CSV file and create each user
+fs.createReadStream('users.csv')
+    .pipe(csv())
+    .on('data', (row) => {
+        const userData = {
+            displayName: row.displayName,
+            mailNickname: row.mailNickname,
+            userPrincipalName: row.userPrincipalName,
+            password: row.password,
+        };
+        createUser(userData);
+    })
+    .on('end', () => {
+        console.log('CSV file successfully processed');
+    });
 
-createUser(userData);
