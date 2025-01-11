@@ -1,5 +1,7 @@
+node_modules/
 logs/
 *.log
 *.csv
 *.json
 *.user
+.env
